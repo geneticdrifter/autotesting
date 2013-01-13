@@ -1,6 +1,18 @@
 from bs4 import BeautifulSoup
 import requests
 import urllib
+import mysql.connector
+import password
+
+def domain_extract(merchant_id):
+    cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
+    cursor = cnx.cursor()
+    cursor.execute(("select id, merchant_id, domain from mugic_merchants_domains where merchant_id = %s") % (merchant_id))
+    domain_list = cursor.fetchall()
+    cursor.close()
+    cnx.close()
+    for domain in domain_list:
+        print domain
 
 def deeplink_extract(domain):
     search = requests.get("https://www.google.com/search?q=site%3A"+urllib.quote(domain, ""))
@@ -13,7 +25,6 @@ def deeplink_extract(domain):
             snippet = snippet[7:]
             snippet = snippet[:snippet.find('&sa=')]
             output.append(snippet)
-    #print output
     return output
 
 def create_affiliate_link(network_deeplink, destination):
@@ -30,11 +41,13 @@ def create_affiliate_link(network_deeplink, destination):
     return url
 
 if __name__ == '__main__':
+    merchant_id = 1
     domain = "asos.com"
     network_deeplink = 'http://ad.zanox.com/ppc/?22484574C16048796T&ULP=[[[URL]]]&zpar0=[tracking]'
-    output = deeplink_extract(domain)
-    destination = output[2]
-    affiliate_link = create_affiliate_link(network_deeplink, destination)
-    print destination
-    print affiliate_link
+    domain = domain_extract(merchant_id)
+    #output = deeplink_extract(domain)
+    #destination = output[2]
+    #affiliate_link = create_affiliate_link(network_deeplink, destination)
+    #print destination
+    #print affiliate_link
     
