@@ -7,7 +7,7 @@ import password
 def domain_extract(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
     cursor = cnx.cursor()
-    cursor.execute(("select id, merchant_id, domain from mugic_merchants_domains where merchant_id = %s") % (merchant_id))
+    cursor.execute("select id, merchant_id, domain from mugic_merchants_domains where merchant_id = %s" , (merchant_id,))
     domain_list = cursor.fetchall()
     cursor.close()
     cnx.close()
@@ -16,11 +16,11 @@ def domain_extract(merchant_id):
 def get_tracking_link(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
     cursor = cnx.cursor()
-    cursor.execute(("select network_deeplink from mugic_merchant where id = %s") % (merchant_id))
+    cursor.execute("select network_deeplink from mugic_merchant where id = %s" , (merchant_id,))
     network_deeplink = cursor.fetchall()
     cursor.close()
     cnx.close()
-    return network_deeplink
+    return network_deeplink[0][0]
 
 def deeplink_extract(domain):
     search = requests.get("https://www.google.com/search?q=site%3A"+urllib.quote(domain, ""))
