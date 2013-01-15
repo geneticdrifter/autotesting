@@ -3,6 +3,7 @@ import requests
 import urllib
 import mysql.connector
 import password
+import sys
 
 def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
@@ -40,7 +41,7 @@ def create_affiliate_link(tracking_url, destination):
     return url
 
 if __name__ == '__main__':
-    merchant_id = 50
+    merchant_id = sys.argv[1]
     merchant_info = merchant_query(merchant_id)
     domain = merchant_info[0][2]
     output = deeplink_extract(domain)
