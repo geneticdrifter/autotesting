@@ -4,23 +4,14 @@ import urllib
 import mysql.connector
 import password
 
-def domain_extract(merchant_id):
+def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
     cursor = cnx.cursor()
-    cursor.execute("select id, merchant_id, domain from mugic_merchants_domains where merchant_id = %s" , (merchant_id,))
+    cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.network_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
     domain_list = cursor.fetchall()
     cursor.close()
     cnx.close()
     return domain_list
-
-def get_tracking_link(merchant_id):
-    cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
-    cursor = cnx.cursor()
-    cursor.execute("select network_deeplink from mugic_merchant where id = %s" , (merchant_id,))
-    network_deeplink = cursor.fetchall()
-    cursor.close()
-    cnx.close()
-    return network_deeplink[0][0]
 
 def deeplink_extract(domain):
     search = requests.get("https://www.google.com/search?q=site%3A"+urllib.quote(domain, ""))
@@ -49,13 +40,13 @@ def create_affiliate_link(tracking_url, destination):
     return url
 
 if __name__ == '__main__':
-    #merchant_id = raw_input("Give me a merchant ID")
-    merchant_id = 27909
-    merchant_info = domain_extract(merchant_id)
-    tracking_url = get_tracking_link(merchant_id)
+    merchant_id = 50
+    merchant_info = merchant_query(merchant_id)
     domain = merchant_info[0][2]
     output = deeplink_extract(domain)
     destination = output[2]
+    tracking_url = merchant_info[0][3]
+    network_id = merchant_info[0][4]
     affiliate_link = create_affiliate_link(tracking_url, destination)
     print destination
     print affiliate_link
