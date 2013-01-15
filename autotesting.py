@@ -9,10 +9,10 @@ def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
     cursor = cnx.cursor()
     cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.network_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
-    domain_list = cursor.fetchall()
+    merchant_information = cursor.fetchall()
     cursor.close()
     cnx.close()
-    return domain_list
+    return merchant_information
 
 def deeplink_extract(domain):
     search = requests.get("https://www.google.com/search?q=site%3A"+urllib.quote(domain, ""))
