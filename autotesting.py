@@ -5,6 +5,9 @@ import mysql.connector
 import password
 import sys
 
+LINKSHARE = 2
+PAIDONRESULTS = 9
+
 def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
     cursor = cnx.cursor()
@@ -29,9 +32,9 @@ def deeplink_extract(domain):
 
 def create_affiliate_link(tracking_url, destination, network_id):
     url = tracking_url.replace('[tracking]', 'skim1x2')
-    if network_id == 2:
+    if network_id == LINKSHARE:
         url = url.replace('[URLenc]', urllib.quote(urllib.quote(destination, ""), ""))
-    elif network_id == 9:
+    elif network_id == PAIDONRESULTS:
         destination = destination.replace('http://', '')
         destination = destination[destination.find('/')+1:]
         url = url.replace('[URLnodomain]', destination)
