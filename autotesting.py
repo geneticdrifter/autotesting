@@ -27,14 +27,14 @@ def deeplink_extract(domain):
             output.append(snippet)
     return output
 
-def create_affiliate_link(tracking_url, destination):
+def create_affiliate_link(tracking_url, destination, network_id):
     url = tracking_url.replace('[tracking]', 'skim1x2')
-    network_id = 20
     if network_id == 2:
         url = url.replace('[URLenc]', urllib.quote(urllib.quote(destination, ""), ""))
     elif network_id == 9:
-        page = destination[page.find('/')+1:]
-        url = url.replace('[URLnodomain]', page)
+        destination = destination.replace('http://', '')
+        destination = destination[destination.find('/')+1:]
+        url = url.replace('[URLnodomain]', destination)
     else:
         url = url.replace('[URLenc]', urllib.quote(destination, ""))
         url = url.replace('[URL]', urllib.quote(destination, ""))
@@ -48,6 +48,6 @@ if __name__ == '__main__':
     destination = output[2]
     tracking_url = merchant_info[0][3]
     network_id = merchant_info[0][4]
-    affiliate_link = create_affiliate_link(tracking_url, destination)
+    affiliate_link = create_affiliate_link(tracking_url, destination, network_id)
     print destination
     print affiliate_link
