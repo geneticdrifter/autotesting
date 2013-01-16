@@ -48,10 +48,10 @@ if __name__ == '__main__':
     for merchant_id in merchant_ids:
         merchant_info = merchant_query(merchant_id)
         domain = merchant_info[0][2]
-        output = deeplink_extract(domain)
-        destination = output[2]
-        tracking_url = merchant_info[0][3]
-        network_id = merchant_info[0][4]
-        affiliate_link = create_affiliate_link(tracking_url, destination, network_id)
-        print destination
-        print affiliate_link
+        deeplinks = deeplink_extract(domain)
+        for link in deeplinks:
+            tracking_url = merchant_info[0][3]
+            network_id = merchant_info[0][4]
+            affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+            print link
+            print affiliate_link
