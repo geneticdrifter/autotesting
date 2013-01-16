@@ -44,13 +44,14 @@ def create_affiliate_link(tracking_url, destination, network_id):
     return url
 
 if __name__ == '__main__':
-    merchant_id = sys.argv[1]
-    merchant_info = merchant_query(merchant_id)
-    domain = merchant_info[0][2]
-    output = deeplink_extract(domain)
-    destination = output[2]
-    tracking_url = merchant_info[0][3]
-    network_id = merchant_info[0][4]
-    affiliate_link = create_affiliate_link(tracking_url, destination, network_id)
-    print destination
-    print affiliate_link
+    merchant_ids = sys.argv[1:]
+    for merchant_id in merchant_ids:
+        merchant_info = merchant_query(merchant_id)
+        domain = merchant_info[0][2]
+        output = deeplink_extract(domain)
+        destination = output[2]
+        tracking_url = merchant_info[0][3]
+        network_id = merchant_info[0][4]
+        affiliate_link = create_affiliate_link(tracking_url, destination, network_id)
+        print destination
+        print affiliate_link
