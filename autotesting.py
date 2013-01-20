@@ -4,6 +4,7 @@ import urllib
 import mysql.connector
 import password
 import sys
+import csv
 
 LINKSHARE = 2
 PAIDONRESULTS = 9
@@ -45,13 +46,14 @@ def create_affiliate_link(tracking_url, destination, network_id):
 
 if __name__ == '__main__':
     merchant_ids = sys.argv[1:]
-    for merchant_id in merchant_ids:
-        merchant_info = merchant_query(merchant_id)
-        domain = merchant_info[0][2]
-        deeplinks = deeplink_extract(domain)
-        for link in deeplinks:
-            tracking_url = merchant_info[0][3]
-            network_id = merchant_info[0][4]
-            affiliate_link = create_affiliate_link(tracking_url, link, network_id)
-            print link
-            print affiliate_link
+    with open('links.csv', 'w') as csvfile:
+        for merchant_id in merchant_ids:
+            writer = csv.writer(csvfile, delimiter=',')
+            merchant_info = merchant_query(merchant_id)
+            domain = merchant_info[0][2]
+            deeplinks = deeplink_extract(domain)
+            for link in deeplinks:
+                tracking_url = merchant_info[0][3]
+                network_id = merchant_info[0][4]
+                affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                writer.writerow([merchant_id] + [domain] + [network_id] + [link] + [affiliate_link])
