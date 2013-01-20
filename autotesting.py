@@ -46,9 +46,10 @@ def create_affiliate_link(tracking_url, destination, network_id):
 
 if __name__ == '__main__':
     merchant_ids = sys.argv[1:]
-    with open('links.csv', 'w') as csvfile:
+    with open('links.csv', 'a') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow(['merchant ID'] + ['domain'] + ['network ID'] + ['link'] + ['affiliate link'])
         for merchant_id in merchant_ids:
-            writer = csv.writer(csvfile, delimiter=',')
             merchant_info = merchant_query(merchant_id)
             domain = merchant_info[0][2]
             deeplinks = deeplink_extract(domain)
