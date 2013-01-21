@@ -1,16 +1,18 @@
 from bs4 import BeautifulSoup
+from email.mime.multipart import MIMEMultipart
 import requests
 import urllib
 import mysql.connector
 import password
 import sys
 import csv
+import smtplib
 
 LINKSHARE = 2
 PAIDONRESULTS = 9
 
 def merchant_query(merchant_id):
-    cnx = mysql.connector.connect(user=password.user, password=password.password, host=password.host, database=password.database)
+    cnx = mysql.connector.connect(user=password.mysqluser, password=password.mysqlpassword, host=password.mysqlhost, database=password.mysqldatabase)
     cursor = cnx.cursor()
     cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.network_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
     merchant_information = cursor.fetchall()
@@ -44,6 +46,19 @@ def create_affiliate_link(tracking_url, destination, network_id):
         url = url.replace('[URL]', urllib.quote(destination, ""))
     return url
 
+def email_output():
+    fromaddr = 'amyerobinson27@gmail.com'
+    toaddrs = 'autotesting@skimlinks.com'
+    msg = 'Subject: Autotesting Output\r\n\r\nGreetings human,\r\nYour links are ready to be tested by the Turks.\r\nFrom the bear links fetcher.'
+    gmail_user = "%s" % (password.gmailuser)
+    gmail_pwd = "%s" % (password.gmailpassword)
+    server = smtplib.SMTP("smtp.gmail.com",587)
+    server.ehlo()
+    server.starttls()
+    server.login(gmail_user, gmail_pwd)
+    server.sendmail(fromaddr, toaddrs, msg)
+    server.quit()
+
 if __name__ == '__main__':
     merchant_ids = sys.argv[1:]
     with open('links.csv', 'a') as csvfile:
@@ -58,3 +73,4 @@ if __name__ == '__main__':
                 network_id = merchant_info[0][4]
                 affiliate_link = create_affiliate_link(tracking_url, link, network_id)
                 writer.writerow([merchant_id] + [domain] + [network_id] + [link] + [affiliate_link])
+    email_output()
