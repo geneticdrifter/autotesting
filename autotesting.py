@@ -49,7 +49,7 @@ def create_affiliate_link(tracking_url, destination, network_id):
 def email_output():
     fromaddr = 'amyerobinson27@gmail.com'
     toaddrs = 'autotesting@skimlinks.com'
-    msg = 'Subject: Autotesting Output\r\n\r\nGreetings human,\r\nYour links are ready to be tested by the Turks.\r\nFrom the bear links fetcher.'
+    msg = 'Subject: Autotesting Output\r\n\r\nGreetings Human,\n\nHere are your links to send to the Turks.\n\nLove from the merchant link generator bot. <3'
     gmail_user = "%s" % (password.gmailuser)
     gmail_pwd = "%s" % (password.gmailpassword)
     server = smtplib.SMTP("smtp.gmail.com",587)
@@ -62,8 +62,8 @@ def email_output():
 if __name__ == '__main__':
     merchant_ids = sys.argv[1:]
     with open('links.csv', 'a') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',')
-        writer.writerow(['merchant ID'] + ['domain'] + ['network ID'] + ['link'] + ['affiliate link'])
+        writer = csv.writer(csvfile, delimiter=",")
+        writer.writerow(['merchant ID', 'domain', 'network ID', 'link', 'affiliate link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
             domain = merchant_info[0][2]
@@ -72,5 +72,5 @@ if __name__ == '__main__':
                 tracking_url = merchant_info[0][3]
                 network_id = merchant_info[0][4]
                 affiliate_link = create_affiliate_link(tracking_url, link, network_id)
-                writer.writerow([merchant_id] + [domain] + [network_id] + [link] + [affiliate_link])
+                writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
     email_output()
