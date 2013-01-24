@@ -63,14 +63,17 @@ if __name__ == '__main__':
     merchant_ids = sys.argv[1:]
     with open('links.csv', 'a') as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
-        writer.writerow(['merchant ID', 'domain', 'network ID', 'link', 'affiliate link'])
+        writer.writerow(['merchant ID', 'domain', 'network ID', '$link', '$affiliate_link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
             domain = merchant_info[0][2]
             deeplinks = deeplink_extract(domain)
+            print "Checking domain:",domain
             for link in deeplinks:
                 tracking_url = merchant_info[0][3]
                 network_id = merchant_info[0][4]
                 affiliate_link = create_affiliate_link(tracking_url, link, network_id)
                 writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
+                print "Fetching links"
     email_output()
+    print "All links obtained -- check your email."
