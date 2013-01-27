@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from email.mime.multipart import MIMEMultipart
+import MimeWriter
 import requests
 import urllib
 import mysql.connector
@@ -7,9 +7,37 @@ import password
 import sys
 import csv
 import smtplib
+import os
+import logging
+import base64
+import StringIO
+import argparse
 
 LINKSHARE = 2
 PAIDONRESULTS = 9
+
+def argument_parse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--deeplink", help="manually setting the deeplink")
+    parser.add_argument("--merchant_ids", help="merchant_IDs to test comma seperated")
+    args = parser.parse_args()
+    return args
+
+def initLogging(level = logging.DEBUG):
+    logging._levelNames[logging.CRITICAL]= '\033[1m\033[91mCRITICAL\033[0m'
+    logging._levelNames[logging.ERROR]= '\033[91mERROR\033[0m'
+    logging._levelNames[logging.WARNING]= '\033[93mWARNING\033[0m'
+    logging._levelNames[logging.INFO]= '\033[94mINFO\033[0m'
+    logging._levelNames[logging.DEBUG]= '\033[92mDEBUG\033[0m'
+
+    requests_log = logging.getLogger("requests")
+    requests_log.setLevel(logging.WARNING)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+    #handler.setFormatter(color.ColorFormatter("%(asctime)s %(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(level)
 
 def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.mysqluser, password=password.mysqlpassword, host=password.mysqlhost, database=password.mysqldatabase)
@@ -43,37 +71,57 @@ def create_affiliate_link(tracking_url, destination, network_id):
         url = url.replace('[URLnodomain]', destination)
     else:
         url = url.replace('[URLenc]', urllib.quote(destination, ""))
-        url = url.replace('[URL]', urllib.quote(destination, ""))
+    url = url.replace('[URL]', urllib.quote(destination, ""))
     return url
 
 def email_output():
+    message = StringIO.StringIO()
+    writer = MimeWriter.MimeWriter(message)
+    writer.addheader("Subject", "Autotesting Link Generator")
+    writer.startmultipartbody("mixed")
+    part = writer.nextpart()
+    body = part.startbody("text/plain")
+    body.write("Hello,\n\nHere are your affliate links to send to the Turks.\n\nLove from the link generator bot. <3")
+    part = writer.nextpart()
+    part.addheader("Content-Transfer-Encoding", "base64")
+    part.addheader("Content-disposition", "attachment;filename=links.csv")
+    body = part.startbody("file/csv")
+    base64.encode(open("links.csv", "rb"), body)
+    writer.lastpart()
     fromaddr = 'amyerobinson27@gmail.com'
     toaddrs = 'autotesting@skimlinks.com'
-    msg = 'Subject: Autotesting Output\r\n\r\nGreetings Human,\n\nHere are your links to send to the Turks.\n\nLove from the merchant link generator bot. <3'
     gmail_user = "%s" % (password.gmailuser)
     gmail_pwd = "%s" % (password.gmailpassword)
     server = smtplib.SMTP("smtp.gmail.com",587)
     server.ehlo()
     server.starttls()
     server.login(gmail_user, gmail_pwd)
-    server.sendmail(fromaddr, toaddrs, msg)
+    server.sendmail(fromaddr, toaddrs, message.getvalue())
     server.quit()
 
 if __name__ == '__main__':
-    merchant_ids = sys.argv[1:]
-    with open('links.csv', 'a') as csvfile:
+    args = argument_parse()
+    initLogging()
+    merchant_ids = args.merchant_ids.split(',')
+    with open('links.csv', 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
         writer.writerow(['merchant ID', 'domain', 'network ID', '$link', '$affiliate_link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
-            domain = merchant_info[0][2]
-            deeplinks = deeplink_extract(domain)
-            print "Checking domain:",domain
-            for link in deeplinks:
-                tracking_url = merchant_info[0][3]
-                network_id = merchant_info[0][4]
-                affiliate_link = create_affiliate_link(tracking_url, link, network_id)
-                writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
-                print "Fetching links"
+            if not merchant_info:
+                logging.error("Invalid Merchant ID %s", merchant_id)
+            else:
+                domain = merchant_info[0][2]
+                deeplinks = deeplink_extract(domain)
+                logging.info(domain)
+                for link in deeplinks:
+                    if args.deeplink:
+                        tracking_url = args.deeplink
+                    else:
+                        tracking_url = merchant_info[0][3]
+                    network_id = merchant_info[0][4]
+                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                    writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
+                    logging.info(tracking_url)
     email_output()
     print "All links obtained -- check your email."
