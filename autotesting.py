@@ -62,6 +62,15 @@ def deeplink_extract(domain):
             output.append(snippet)
     return output
 
+def get_trackingurl(status_id):
+    if status_id = '1001':
+        tracking_url = merchant_info[0][3]
+    elif status_id = '1002':
+        tracking_url = merchant_info[0][4]
+    else:
+        tracking_url = None
+    return tracking_url
+
 def create_affiliate_link(tracking_url, destination, network_id):
     url = tracking_url.replace('[tracking]', 'skim1x2')
     if network_id == LINKSHARE:
@@ -109,34 +118,32 @@ if __name__ == '__main__':
         writer.writerow(['merchant ID', 'domain', 'network ID', 'link', 'affiliate_link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
+            logging.debug(merchant_info)
             if not merchant_info:
                 logging.error("Invalid Merchant ID %s", merchant_id)
             else:
                 domain = merchant_info[0][2]
+                status_id = merchant_info[0][6]
+                network_id = merchant_info[0][5]
                 logging.info(domain)
+                if args.status_id:
+                    status_id = args.status_id
+                if args.deeplink:
+                    tracking_url = args.deeplink
+                else:
+                    logging.debug(status_id)
+                    tracking_url = get_trackingurl(status_id)
+                logging.debug(tracking_url)
+                if tracking_url is None:
+                    logging.error("Status_id outside range %s", status_id)
+                    continue
                 deeplinks = deeplink_extract(domain)
-                logging.debug("%s", deeplinks)
+                logging.debug(deeplinks)
                 if not deeplinks:
                     logging.error("No deeplinks obtained")
-                else:
-                    if args.status_id:
-                        status_id = args.status_id
-                    else:
-                        status_id = merchant_info[0][6]
-                        if status_id == 1001:
-                            tracking_url = merchant_info[0][3]
-                        elif status_id == 1002:
-                            tracking_url = merchant_info[0][4]
-                        if status_id > 1002:
-                            logging.error("Status_id outside range %s", status_id)
-                        else:
-                            for link in deeplinks:
-                                if args.deeplink:
-                                    tracking_url = args.deeplink
-                                else:
-                                    network_id = merchant_info[0][5]
-                                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
-                                    writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
-                                    logging.info(tracking_url)
-    email_output()
+                    continue
+                for link in deeplinks:
+                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                    writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
+    #email_output()
     print "All links obtained -- check your email."
