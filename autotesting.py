@@ -105,7 +105,7 @@ if __name__ == '__main__':
     merchant_ids = args.merchant_ids.split(',')
     with open('links.csv', 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
-        writer.writerow(['merchant ID', 'domain', 'network ID', '$link', '$affiliate_link'])
+        writer.writerow(['merchant ID', 'domain', 'network ID', 'link', 'affiliate_link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
             if not merchant_info:
