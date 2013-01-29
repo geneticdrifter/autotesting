@@ -20,6 +20,7 @@ def argument_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument("--deeplink", help="manually setting the deeplink")
     parser.add_argument("--merchant_ids", help="merchant_IDs to test comma seperated")
+    parser.add_argument("--status_id", help="manually setting the status_id, there must only be one")
     args = parser.parse_args()
     return args
 
@@ -42,7 +43,7 @@ def initLogging(level = logging.DEBUG):
 def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.mysqluser, password=password.mysqlpassword, host=password.mysqlhost, database=password.mysqldatabase)
     cursor = cnx.cursor()
-    cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.network_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
+    cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.skim_deeplink, mm.network_id, mm.status_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
     merchant_information = cursor.fetchall()
     cursor.close()
     cnx.close()
@@ -112,16 +113,30 @@ if __name__ == '__main__':
                 logging.error("Invalid Merchant ID %s", merchant_id)
             else:
                 domain = merchant_info[0][2]
-                deeplinks = deeplink_extract(domain)
                 logging.info(domain)
-                for link in deeplinks:
-                    if args.deeplink:
-                        tracking_url = args.deeplink
+                deeplinks = deeplink_extract(domain)
+                logging.debug("%s", deeplinks)
+                if not deeplinks:
+                    logging.error("No deeplinks obtained")
+                else:
+                    if args.status_id:
+                        status_id = args.status_id
                     else:
-                        tracking_url = merchant_info[0][3]
-                    network_id = merchant_info[0][4]
-                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
-                    writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
-                    logging.info(tracking_url)
+                        status_id = merchant_info[0][6]
+                        if status_id == 1001:
+                            tracking_url = merchant_info[0][3]
+                        elif status_id == 1002:
+                            tracking_url = merchant_info[0][4]
+                        if status_id > 1002:
+                            logging.error("Status_id outside range %s", status_id)
+                        else:
+                            for link in deeplinks:
+                                if args.deeplink:
+                                    tracking_url = args.deeplink
+                                else:
+                                    network_id = merchant_info[0][5]
+                                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                                    writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
+                                    logging.info(tracking_url)
     email_output()
     print "All links obtained -- check your email."
