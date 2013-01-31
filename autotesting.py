@@ -62,10 +62,10 @@ def deeplink_extract(domain):
             output.append(snippet)
     return output
 
-def get_trackingurl(status_id):
-    if status_id = '1001':
+def get_trackingurl(status_id,merchant_info):
+    if status_id == '1001':
         tracking_url = merchant_info[0][3]
-    elif status_id = '1002':
+    elif status_id == '1002':
         tracking_url = merchant_info[0][4]
     else:
         tracking_url = None
@@ -118,7 +118,6 @@ if __name__ == '__main__':
         writer.writerow(['merchant ID', 'domain', 'network ID', 'link', 'affiliate_link'])
         for merchant_id in merchant_ids:
             merchant_info = merchant_query(merchant_id)
-            logging.debug(merchant_info)
             if not merchant_info:
                 logging.error("Invalid Merchant ID %s", merchant_id)
             else:
@@ -132,7 +131,7 @@ if __name__ == '__main__':
                     tracking_url = args.deeplink
                 else:
                     logging.debug(status_id)
-                    tracking_url = get_trackingurl(status_id)
+                    tracking_url = get_trackingurl(status_id,merchant_info)
                 logging.debug(tracking_url)
                 if tracking_url is None:
                     logging.error("Status_id outside range %s", status_id)
