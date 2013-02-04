@@ -122,11 +122,11 @@ if __name__ == '__main__':
                 logging.error("Invalid Merchant ID %s", merchant_id)
             else:
                 domain = merchant_info[0][2]
-                status_id = merchant_info[0][6]
+                status_id = str(merchant_info[0][6])
                 network_id = merchant_info[0][5]
                 logging.info(domain)
                 if args.status_id:
-                    status_id = args.status_id
+                    status_id = str(args.status_id)
                 if args.deeplink:
                     tracking_url = args.deeplink
                 else:
@@ -143,6 +143,7 @@ if __name__ == '__main__':
                     continue
                 for link in deeplinks:
                     affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                    logging.info(affiliate_link)
                     writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
-    #email_output()
+    email_output()
     print "All links obtained -- check your email."
