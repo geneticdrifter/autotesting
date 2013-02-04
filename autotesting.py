@@ -18,13 +18,13 @@ PAIDONRESULTS = 9
 
 def argument_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--deeplink", help="manually setting the deeplink")
+    parser.add_argument("--deeplink", help="manually setting the deeplink in qoutes")
     parser.add_argument("--merchant_ids", help="merchant_IDs to test comma seperated")
     parser.add_argument("--status_id", help="manually setting the status_id, there must only be one")
     args = parser.parse_args()
     return args
 
-def initLogging(level = logging.DEBUG):
+def initLogging(level = logging.INFO):
     logging._levelNames[logging.CRITICAL]= '\033[1m\033[91mCRITICAL\033[0m'
     logging._levelNames[logging.ERROR]= '\033[91mERROR\033[0m'
     logging._levelNames[logging.WARNING]= '\033[93mWARNING\033[0m'
@@ -43,7 +43,7 @@ def initLogging(level = logging.DEBUG):
 def merchant_query(merchant_id):
     cnx = mysql.connector.connect(user=password.mysqluser, password=password.mysqlpassword, host=password.mysqlhost, database=password.mysqldatabase)
     cursor = cnx.cursor()
-    cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.skim_deeplink, mm.network_id, mm.status_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
+    cursor.execute("select md.id, md.merchant_id, md.domain, mm.network_deeplink, mm.skim_deeplink, mm.network_id, mm.status_id, mm.network_merchant_id from mugic_merchants_domains md inner join mugic_merchant mm on mm.id = md.merchant_id where md.merchant_id = %s" , (merchant_id,))
     merchant_information = cursor.fetchall()
     cursor.close()
     cnx.close()
@@ -71,8 +71,9 @@ def get_trackingurl(status_id,merchant_info):
         tracking_url = None
     return tracking_url
 
-def create_affiliate_link(tracking_url, destination, network_id):
+def create_affiliate_link(tracking_url, destination, network_id, network_merchant_id):
     url = tracking_url.replace('[tracking]', 'skim1x2')
+    url = url.replace('[mid]', network_merchant_id)
     if network_id == LINKSHARE:
         url = url.replace('[URLenc]', urllib.quote(urllib.quote(destination, ""), ""))
     elif network_id == PAIDONRESULTS:
@@ -124,6 +125,8 @@ if __name__ == '__main__':
                 domain = merchant_info[0][2]
                 status_id = str(merchant_info[0][6])
                 network_id = merchant_info[0][5]
+                network_merchant_id = str(merchant_info[0][7])
+                logging.debug(merchant_info)
                 logging.info(domain)
                 if args.status_id:
                     status_id = str(args.status_id)
@@ -142,7 +145,7 @@ if __name__ == '__main__':
                     logging.error("No deeplinks obtained")
                     continue
                 for link in deeplinks:
-                    affiliate_link = create_affiliate_link(tracking_url, link, network_id)
+                    affiliate_link = create_affiliate_link(tracking_url, link, network_id, network_merchant_id)
                     logging.info(affiliate_link)
                     writer.writerow([merchant_id, domain, network_id, link, affiliate_link])
     email_output()
